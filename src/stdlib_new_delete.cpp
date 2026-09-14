@@ -10,6 +10,7 @@
 
 #include "__cxxabi_config.h"
 #include <new>
+#include <cstdint>
 #include <cstdlib>
 
 #if !defined(_THROW_BAD_ALLOC) || !defined(_LIBCXXABI_WEAK)
@@ -127,6 +128,38 @@ operator delete[] (void* ptr, const std::nothrow_t&) noexcept
 _LIBCXXABI_WEAK
 void
 operator delete[] (void* ptr, size_t) noexcept
+{
+    ::operator delete[](ptr);
+}
+
+// Typed allocation overloads that binaries built for macOS 26 import. The descriptor is only
+// an allocator hint, so these forward to the untyped operators.
+namespace std { enum class __type_descriptor_t : uint64_t {}; }
+
+_LIBCXXABI_WEAK
+void *
+operator new(std::size_t size, std::__type_descriptor_t) _THROW_BAD_ALLOC
+{
+    return ::operator new(size);
+}
+
+_LIBCXXABI_WEAK
+void *
+operator new[](std::size_t size, std::__type_descriptor_t) _THROW_BAD_ALLOC
+{
+    return ::operator new[](size);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete(void* ptr, std::__type_descriptor_t) noexcept
+{
+    ::operator delete(ptr);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete[](void* ptr, std::__type_descriptor_t) noexcept
 {
     ::operator delete[](ptr);
 }
