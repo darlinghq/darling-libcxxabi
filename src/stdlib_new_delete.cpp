@@ -164,6 +164,168 @@ operator delete[](void* ptr, std::__type_descriptor_t) noexcept
     ::operator delete[](ptr);
 }
 
+_LIBCXXABI_WEAK
+void*
+operator new(std::size_t size, std::__type_descriptor_t, const std::nothrow_t& nt) noexcept
+{
+    return ::operator new(size, nt);
+}
+
+_LIBCXXABI_WEAK
+void*
+operator new[](std::size_t size, std::__type_descriptor_t, const std::nothrow_t& nt) noexcept
+{
+    return ::operator new[](size, nt);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete(void* ptr, std::__type_descriptor_t, std::size_t) noexcept
+{
+    ::operator delete(ptr);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete[](void* ptr, std::__type_descriptor_t, std::size_t) noexcept
+{
+    ::operator delete[](ptr);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete(void* ptr, std::__type_descriptor_t, const std::nothrow_t&) noexcept
+{
+    ::operator delete(ptr);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete[](void* ptr, std::__type_descriptor_t, const std::nothrow_t&) noexcept
+{
+    ::operator delete[](ptr);
+}
+
+// The typed aligned overloads are exported by libc++abi on macOS. Darling
+// builds libc++abi without the aligned operators (libc++ provides those), so
+// std::align_val_t may be missing here, and the allocation is done directly.
+#if defined(_LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION)
+namespace std { enum class align_val_t : size_t {}; }
+#endif
+
+static void*
+typed_aligned_new(std::size_t size, std::align_val_t alignment)
+{
+    std::size_t align = static_cast<std::size_t>(alignment);
+    if (size == 0)
+        size = 1;
+    if (align < sizeof(void*))
+        align = sizeof(void*);
+
+    void* p;
+    while (::posix_memalign(&p, align, size) != 0)
+    {
+        std::new_handler nh = std::get_new_handler();
+        if (nh)
+            nh();
+        else
+#ifndef _LIBCXXABI_NO_EXCEPTIONS
+            throw std::bad_alloc();
+#else
+            return nullptr;
+#endif
+    }
+    return p;
+}
+
+static void*
+typed_aligned_new_nothrow(std::size_t size, std::align_val_t alignment) noexcept
+{
+    void* p = nullptr;
+#ifndef _LIBCXXABI_NO_EXCEPTIONS
+    try
+    {
+#endif
+        p = typed_aligned_new(size, alignment);
+#ifndef _LIBCXXABI_NO_EXCEPTIONS
+    }
+    catch (...)
+    {
+    }
+#endif
+    return p;
+}
+
+_LIBCXXABI_WEAK
+void*
+operator new(std::size_t size, std::__type_descriptor_t, std::align_val_t alignment) _THROW_BAD_ALLOC
+{
+    return typed_aligned_new(size, alignment);
+}
+
+_LIBCXXABI_WEAK
+void*
+operator new[](std::size_t size, std::__type_descriptor_t, std::align_val_t alignment) _THROW_BAD_ALLOC
+{
+    return typed_aligned_new(size, alignment);
+}
+
+_LIBCXXABI_WEAK
+void*
+operator new(std::size_t size, std::__type_descriptor_t, std::align_val_t alignment, const std::nothrow_t&) noexcept
+{
+    return typed_aligned_new_nothrow(size, alignment);
+}
+
+_LIBCXXABI_WEAK
+void*
+operator new[](std::size_t size, std::__type_descriptor_t, std::align_val_t alignment, const std::nothrow_t&) noexcept
+{
+    return typed_aligned_new_nothrow(size, alignment);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete(void* ptr, std::__type_descriptor_t, std::align_val_t) noexcept
+{
+    ::free(ptr);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete[](void* ptr, std::__type_descriptor_t, std::align_val_t) noexcept
+{
+    ::free(ptr);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete(void* ptr, std::__type_descriptor_t, std::size_t, std::align_val_t) noexcept
+{
+    ::free(ptr);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete[](void* ptr, std::__type_descriptor_t, std::size_t, std::align_val_t) noexcept
+{
+    ::free(ptr);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete(void* ptr, std::__type_descriptor_t, std::align_val_t, const std::nothrow_t&) noexcept
+{
+    ::free(ptr);
+}
+
+_LIBCXXABI_WEAK
+void
+operator delete[](void* ptr, std::__type_descriptor_t, std::align_val_t, const std::nothrow_t&) noexcept
+{
+    ::free(ptr);
+}
+
 #if !defined(_LIBCPP_HAS_NO_LIBRARY_ALIGNED_ALLOCATION)
 
 _LIBCXXABI_WEAK
