@@ -1,4 +1,4 @@
-//===----------------------- cxa_thread_atexit.cpp ------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
 // See https://llvm.org/LICENSE.txt for license information.
@@ -8,7 +8,7 @@
 
 #include "abort_message.h"
 #include "cxxabi.h"
-#include <__threading_support>
+#include <__thread/support.h>
 #ifndef _LIBCXXABI_HAS_NO_THREADS
 #if defined(__ELF__) && defined(_LIBCXXABI_LINK_PTHREAD_LIB)
 #pragma comment(lib, "pthread")
@@ -23,6 +23,8 @@ namespace __cxxabiv1 {
 
   extern "C"
 #ifdef DARLING
+  // DARLING: no C library provides __cxa_thread_atexit_impl, and a weak
+  // undefined symbol does not link here, so the fallback below is always used.
   int (*__cxa_thread_atexit_impl)(Dtor, void*, void*) = nullptr;
 #else // !DARLING
 #ifndef HAVE___CXA_THREAD_ATEXIT_IMPL

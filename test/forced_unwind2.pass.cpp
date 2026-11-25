@@ -10,8 +10,12 @@
 
 // UNSUPPORTED: no-exceptions, c++03
 
+// VE only supports SjLj and doesn't provide _Unwind_ForcedUnwind.
+// UNSUPPORTED: target={{ve-.*}}
+
 // These tests fail on previously released dylibs, investigation needed.
-// XFAIL: use_system_cxx_lib && target={{.+}}-apple-macosx10.{{9|10|11|12|13|14|15}}
+// XFAIL: stdlib=system && target={{.+}}-apple-macosx10.{{9|10|11|12|13|14|15}}
+// XFAIL: stdlib=system && target={{.+}}-apple-macosx{{11.0|12.0}}
 
 #include <exception>
 #include <stdlib.h>
@@ -21,11 +25,6 @@
 #include <tuple>
 #include <__cxxabi_config.h>
 
-#if defined(_LIBCXXABI_ARM_EHABI)
-int main(int, char**) {
-  return 0;
-}
-#else
 template <typename T>
 struct Stop;
 
@@ -46,7 +45,7 @@ struct Stop<R (*)(Args...)> {
 
 static void forced_unwind() {
   _Unwind_Exception* exc = new _Unwind_Exception;
-  exc->exception_class = 0;
+  memset(&exc->exception_class, 0, sizeof(exc->exception_class));
   exc->exception_cleanup = 0;
   _Unwind_ForcedUnwind(exc, Stop<_Unwind_Stop_Fn>::stop, 0);
   abort();
@@ -64,4 +63,3 @@ int main(int, char**) {
   }
   abort();
 }
-#endif
